@@ -1,8 +1,16 @@
-import bcrypt from 'bcrypt';
+import { randomBytes, scrypt as scryptCallback } from 'node:crypto';
 import postgres from 'postgres';
+import { promisify } from 'node:util';
 import { invoices, customers, revenue, users } from '../lib/placeholder-data';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const scrypt = promisify(scryptCallback);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString('hex');
+  const key = (await scrypt(password, salt, 64)) as Buffer;
+  return `$scrypt$${salt}$${key.toString('hex')}`;
+}
 
 async function seedUsers() {
   await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
@@ -17,7 +25,7 @@ async function seedUsers() {
 
   const insertedUsers = await Promise.all(
     users.map(async (user) => {
-      const hashedPassword = await bcrypt.hash(user.password, 10);
+      const hashedPassword = await hashPassword(user.password);
       return sql`
         INSERT INTO users (id, name, email, password)
         VALUES (${user.id}, ${user.name}, ${user.email}, ${hashedPassword})

@@ -1,8 +1,3 @@
-import { Inter, Lusitana } from 'next/font/google';
- 
-export const inter = Inter({ subsets: ['latin'] });
- 
-export const lusitana = Lusitana({
-  weight: ['400', '700'],
-  subsets: ['latin'],
-});
+// Use local system font stacks so the app builds without fetching Google Fonts.
+export const inter = { className: 'font-sans' };
+export const lusitana = { className: 'font-serif' };
